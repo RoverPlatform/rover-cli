@@ -1,6 +1,6 @@
 {
   "name": "rover-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A command line client for interacting with the Rover API",
   "main": "index.js",
   "bin": {
