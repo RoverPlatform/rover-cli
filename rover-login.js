@@ -1,24 +1,27 @@
 #!/usr/bin/env node
 
-const inquirer = require("inquirer")
-const request = require("request")
-
-function signIn() {
+(function login() {
+    const inquirer = require("inquirer")
+    const request = require("request")
     const self = this
 
-    let email
-    let password
-    let session
-    let account
-    let user
+    self.email = null
+    self.password = null
+    self.session = null
+    self.account = null
+    self.user = null
 
-    return Promise.resolve()
+    Promise.resolve()
         .then(inquire)
         .then(createSession)
         .then(fetchAccount)
         .then(fetchUser)
         .then(() => {
-            return self
+            console.log("Successfully signed in as " + self.user.name + " (" + self.account.title + ")")
+        })
+        .catch((err) => {
+            console.log("Invalid email or password")
+            login()
         })
 
     function inquire() {
@@ -164,18 +167,4 @@ function signIn() {
             })
         })
     }
-}
-
-(function login() {
-
-    const success = ({ session, account, user }) => {
-        console.log("Successfully signed in as " + user.name + " (" + account.title + ")")
-    }
-
-    const retry = (err) => {
-        console.log("Invalid email or password")
-        login()
-    }
-
-    signIn().then(success).catch(retry)
 })()
