@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
-var apn = require("apn")
-var args = require("args")
-var fs = require("fs")
-var path = require("path")
+const apn = require("apn")
+const commander = require('commander')
+const fs = require("fs")
+const path = require("path")
+const pkg = require("./package.json")
 
-let flags, provider, notification
+let program, provider, notification
 
 Promise.resolve()
-    .then(captureTheFlags)
-    .then(validateFlags)
+    .then(buildProgram)
+    .then(validateOptions)
     .then(configureProvider)
     .then(buildNotification)
     .then(sendNotification)
@@ -23,43 +24,42 @@ Promise.resolve()
         process.exit(1)
     })
 
-function captureTheFlags() {
-    args
-      .option("certificate", "Path to a valid APNS certificate")
-      .option("passphrase", "APNS certificate passphrase - required unless passphrase is blank")
-      .option("bundle-id", "The app's bundle identifier")
-      .option("device-token", "The device's push token")
-      .option("development", "Use the development APNS environment")
+function buildProgram() {
+    program = commander.version(pkg.version)
+        .option("--certificate <file>", "Path to a valid APNS certificate")
+        .option("--passphrase <string>", "APNS certificate passphrase - required unless passphrase is blank")
+        .option("--bundle-id <string>", "The app's bundle identifier")
+        .option("--device-token <string>", "The device's push token")
+        .option("-D --development", "Use the development APNS environment")
 
-      .option("title", "A short string describing the purpose of the notification")
-      .option("body", "The text of the alert message", "Lorem ipsum sit dolor amet...")
-      .option("badge", "The number displayed in badge of your app icon")
-      .option("sound", "The name of a sound file in your app's main bundle or in the Library/Sounds folder of your app's data container")
-      .option("content-available", "Set this flag to send a silent notification")
-      .option("category", "A string value that represents the notification's type")
-      .option("thread-id", "A string value that represents the app-specific identifier for grouping notifications")
-      .option("mutable-content", "Indicates this notification can be modified by a service extension")
-
-    flags = args.parse(process.argv)
+        .option("--title <string>", "A short string describing the purpose of the notification")
+        .option("--body <string>", "The text of the alert message", "Lorem ipsum sit dolor amet...")
+        .option("--badge <integer>", "The number displayed in badge of your app icon")
+        .option("--sound <string>", "The name of a sound file in your app's main bundle or in the Library/Sounds folder of your app's data container")
+        .option("-C --content-available", "Set this flag to send a silent notification")
+        .option("--category <string>", "A string value that represents the notification's type")
+        .option("--thread-id <string>", "A string value that represents the app-specific identifier for grouping notifications")
+        .option("-M --mutable-content", "Indicates this notification can be modified by a service extension")
+        .parse(process.argv)
 }
 
-function validateFlags() {
+function validateOptions() {
     const requiredKeys = ["certificate", "bundleId", "deviceToken", "body"]
     for (let i = 0; i < requiredKeys.length; i++) {
         const key = requiredKeys[i]
-        if (flags[key] === undefined) {
+        if (program[key] === undefined) {
             return Promise.reject(key + " is required")
         }
     }
 
-    let fileExists = fs.existsSync(flags.certificate)
+    let fileExists = fs.existsSync(program.certificate)
     if (!fileExists) {
-        return Promise.reject("Certificate at path " + flags.certificate + " does not exist")
+        return Promise.reject("Certificate at path " + program.certificate + " does not exist")
     }
 
-    let fileExtension = path.extname(flags.certificate)
+    let fileExtension = path.extname(program.certificate)
     if (fileExtension !== ".p12") {
-        return Promise.reject("Certificate at path " + flags.certificate + " is not a valid p12 file")
+        return Promise.reject("Certificate at path " + program.certificate + " is not a valid p12 file")
     }
 
     return Promise.resolve()
@@ -67,9 +67,9 @@ function validateFlags() {
 
 function configureProvider() {
     provider = new apn.Provider({
-      pfx: fs.readFileSync(flags.certificate),
-      production: flags.development ? false : true,
-      passphrase: flags.passphrase
+      pfx: fs.readFileSync(program.certificate),
+      production: program.development ? false : true,
+      passphrase: program.passphrase
     })
 }
 
@@ -77,25 +77,25 @@ function buildNotification() {
     notification = new apn.Notification({
         "aps": {
             "alert": {
-                "title": flags.title,
-                "body": flags.body
+                "title": program.title,
+                "body": program.body
             },
-            "badge": flags.badge,
-            "sound": flags.sound,
-            "content-available": flags.contentAvailable,
-            "category": flags.category,
-            "thread-id": flags.threadId,
+            "badge": program.badge,
+            "sound": program.sound,
+            "content-available": program.contentAvailable,
+            "category": program.category,
+            "thread-id": program.threadId,
             "rover": {
                 "foo": "bar"
             }
         },
-        "topic": flags.bundleId,
+        "topic": program.bundleId,
         "priority": 10
     })
 }
 
 function sendNotification() {
-    return provider.send(notification, flags.deviceToken)
+    return provider.send(notification, program.deviceToken)
 }
 
 function validateResponse(response) {

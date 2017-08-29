@@ -4,7 +4,7 @@
   "description": "A command line client for interacting with the Rover API",
   "main": "index.js",
   "bin": {
-      "rover": "./index.js"
+    "rover": "./index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,6 +13,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "apn": "^2.1.5",
-    "args": "^3.0.4"
+    "commander": "^2.11.0"
   }
 }
