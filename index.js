@@ -5,6 +5,8 @@ const pkg = require("./package.json")
 
 let program = commander
     .version(pkg.version)
-    .command('push', 'send a push notification')
-    .command('login', 'sign in to your Rover account')
+    .command("whoami", "display the current logged in user")
+    .command("login", "login with your Rover credentials")
+    .command("logout", "clears local login credentials")
+    .command("push", "send a push notification")
     .parse(process.argv)

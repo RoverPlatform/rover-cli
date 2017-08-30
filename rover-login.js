@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 (function login() {
-    const inquirer = require("inquirer")
-    const request = require("request")
     const self = this
 
     self.email = null
@@ -16,15 +14,19 @@
         .then(createSession)
         .then(fetchAccount)
         .then(fetchUser)
+        .then(writeToFile)
         .then(() => {
-            console.log("Successfully signed in as " + self.user.name + " (" + self.account.title + ")")
+            console.log("Logged in as " + self.user.name + " <" + self.user.email + ">")
         })
         .catch((err) => {
-            console.log("Invalid email or password")
             login()
         })
 
     function inquire() {
+        const inquirer = require("inquirer")
+
+        console.log("Enter your Rover crednetials.")
+
         const questions = [{
             name: "email",
             message: "Email:"
@@ -41,6 +43,8 @@
     }
 
     function createSession() {
+        const request = require("request")
+
         return new Promise((resolve, reject) => {
             const { email, password } = self
             const body = JSON.stringify({
@@ -93,6 +97,8 @@
     }
 
     function fetchAccount() {
+        const request = require("request")
+
         return new Promise((resolve, reject) => {
             const { token, accountId } = self.session
             const options = {
@@ -131,6 +137,8 @@
     }
 
     function fetchUser() {
+        const request = require("request")
+
         return new Promise((resolve, reject) => {
             const { token, userId } = self.session
             const options = {
@@ -158,7 +166,8 @@
                     const data = json.data
                     self.user = {
                         id: data.id,
-                        name: data.attributes.name
+                        name: data.attributes.name,
+                        email: data.attributes.email
                     }
                     resolve()
                 } catch (error) {
@@ -166,5 +175,20 @@
                 }
             })
         })
+    }
+
+    function writeToFile() {
+        const fs = require("fs")
+        const path = require("path")
+
+        const data = JSON.stringify({
+            session: self.session,
+            account: self.account,
+            user: self.user
+        })
+
+        const file = path.join(__dirname, 'login.json')
+        fs.writeFileSync(file, data)
+        return Promise.resolve()
     }
 })()
