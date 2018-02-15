@@ -81,6 +81,17 @@ function configureProvider() {
 }
 
 function buildNotification() {
+    if (program.contentAvailable) {
+        notification = new apn.Notification({
+            "aps": {
+                "content-available": 1
+            },
+            "topic": program.bundleId,
+            "priority": 10
+        })
+        return
+    }
+
     notification = new apn.Notification({
         "aps": {
             "alert": {
@@ -89,11 +100,23 @@ function buildNotification() {
             },
             "badge": program.badge,
             "sound": program.sound,
-            "content-available": program.contentAvailable,
             "category": program.category,
             "thread-id": program.threadId,
             "rover": {
-                "foo": "bar"
+                "notification": {
+                    "id": "foo",
+                    "campaignId": "bar",
+                    "title": program.title,
+                    "body": program.body,
+                    "action": {
+                        "__typename": "PresentExperienceAction",
+                        "experienceId": "5873dee6d5bf3e002de4d70e"
+                    },
+                    "deliveredAt": "2017-11-22T13:01:48-05:00",
+                    "expiresAt": "2017-12-24T00:00:00-05:00",
+                    "isRead": false,
+                    "isNotificationCenterEnabled": true
+                }
             }
         },
         "topic": program.bundleId,
